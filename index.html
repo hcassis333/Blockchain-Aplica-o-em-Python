@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Manager</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #2196F3;
+            border-bottom: 2px solid #2196F3;
+        }
+
+        .tab-content {
+            display: none;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #2196F3;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #1976D2;
+        }
+
+        .block {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .transaction {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="margin-bottom: 20px;">Blockchain Manager</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('transactions')">Transações</button>
+            <button class="tab" onclick="showTab('mining')">Mineração</button>
+            <button class="tab" onclick="showTab('chain')">Blockchain</button>
+            <button class="tab" onclick="showTab('balance')">Saldo</button>
+        </div>
+
+        <div id="transactions" class="tab-content active">
+            <h2>Nova Transação</h2>
+            <div class="form-group">
+                <label>Remetente:</label>
+                <input type="text" id="sender" placeholder="Endereço do remetente">
+            </div>
+            <div class="form-group">
+                <label>Destinatário:</label>
+                <input type="text" id="recipient" placeholder="Endereço do destinatário">
+            </div>
+            <div class="form-group">
+                <label>Quantidade:</label>
+                <input type="number" id="amount" placeholder="Quantidade">
+            </div>
+            <button onclick="addTransaction()">Adicionar Transação</button>
+            <div id="transactionStatus" class="status"></div>
+            
+            <h3 style="margin-top: 20px;">Transações Pendentes</h3>
+            <div id="pendingTransactions"></div>
+        </div>
+
+        <div id="mining" class="tab-content">
+            <h2>Minerar Novo Bloco</h2>
+            <div class="form-group">
+                <label>Endereço do Minerador:</label>
+                <input type="text" id="minerAddress" placeholder="Endereço do minerador">
+            </div>
+            <button onclick="mineBlock()">Minerar Bloco</button>
+            <div id="miningStatus" class="status"></div>
+        </div>
+
+        <div id="chain" class="tab-content">
+            <h2>Blocos da Blockchain</h2>
+            <button onclick="updateChainView()" style="margin-bottom: 20px;">Atualizar</button>
+            <div id="blockchainView"></div>
+        </div>
+
+        <div id="balance" class="tab-content">
+            <h2>Consultar Saldo</h2>
+            <div class="form-group">
+                <label>Endereço:</label>
+                <input type="text" id="balanceAddress" placeholder="Endereço para consulta">
+            </div>
+            <button onclick="checkBalance()">Verificar Saldo</button>
+            <div id="balanceView" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function addTransaction() {
+            const sender = document.getElementById('sender').value;
+            const recipient = document.getElementById('recipient').value;
+            const amount = document.getElementById('amount').value;
+            const status = document.getElementById('transactionStatus');
+
+            try {
+                const response = await axios.post('/api/transaction', {
+                    sender,
+                    recipient,
+                    amount
+                });
+                status.textContent = response.data.message;
+                status.className = 'status success';
+                updatePendingTransactions();
+                // Limpar campos após sucesso
+                document.getElementById('sender').value = '';
+                document.getElementById('recipient').value = '';
+                document.getElementById('amount').value = '';
+            } catch (error) {
+                status.textContent = 'Erro ao adicionar transação';
+                status.className = 'status error';
+            }
+        }
+
+        async function mineBlock() {
+            const miner = document.getElementById('minerAddress').value;
+            const status = document.getElementById('miningStatus');
+            
+            try {
+                const response = await axios.post('/api/mine', { miner });
+                status.textContent = response.data.message;
+                status.className = 'status success';
+                updateChainView();
+                updatePendingTransactions();
+            } catch (error) {
+                status.textContent = 'Erro ao minerar bloco';
+                status.className = 'status error';
+            }
+        }
+
+        async function checkBalance() {
+            const address = document.getElementById('balanceAddress').value;
+            const balanceView = document.getElementById('balanceView');
+            
+            try {
+                const response = await axios.get(`/api/balance/${address}`);
+                balanceView.textContent = `Saldo: ${response.data.balance}`;
+                balanceView.className = 'status success';
+            } catch (error) {
+                balanceView.textContent = 'Erro ao consultar saldo';
+                balanceView.className = 'status error';
+            }
+        }
+
+        async function updateChainView() {
+            const chainView = document.getElementById('blockchainView');
+            
+            try {
+                const response = await axios.get('/api/chain');
+                chainView.innerHTML = '';
+                
+                response.data.chain.forEach(block => {
+                    const blockElement = document.createElement('div');
+                    blockElement.className = 'block';
+                    blockElement.innerHTML = `
+                        <h3>Bloco #${block.index}</h3>
+                        <p>Hash: ${block.hash}</p>
+                        <p>Hash Anterior: ${block.previous_hash}</p>
+                        <p>Timestamp: ${moment(block.timestamp * 1000).format('DD/MM/YYYY HH:mm:ss')}</p>
+                        <p>Nonce: ${block.nonce}</p>
+                        <h4>Transações:</h4>
+                    `;
+                    
+                    block.transactions.forEach(tx => {
+                        const txElement = document.createElement('div');
+                        txElement.className = 'transaction';
+                        txElement.textContent = `De: ${tx.from} Para: ${tx.to} Valor: ${tx.amount}`;
+                        blockElement.appendChild(txElement);
+                    });
+                    
+                    chainView.appendChild(blockElement);
+                });
+            } catch (error) {
+                chainView.innerHTML = '<p class="error">Erro ao carregar a blockchain</p>';
+            }
+        }
+
+        async function updatePendingTransactions() {
+            const pendingView = document.getElementById('pendingTransactions');
+            
+            try {
+                const response = await axios.get('/api/chain');
+                pendingView.innerHTML = '';
+                
+                response.data.pending_transactions.forEach(tx => {
+                    const txElement = document.createElement('div');
+                    txElement.className = 'transaction';
+                    txElement.textContent = `De: ${tx.from} Para: ${tx.to} Valor: ${tx.amount}`;
+                    pendingView.appendChild(txElement);
+                });
+            } catch (error) {
+                pendingView.innerHTML = '<p class="error">Erro ao carregar transações pendentes</p>';
+            }
+        }
+
+        // Carregar dados iniciais
+        updateChainView();
+        updatePendingTransactions();
+    </script>
+</body>
+</html>
