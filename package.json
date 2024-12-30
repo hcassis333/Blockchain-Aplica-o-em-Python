@@ -1,0 +1,19 @@
+{
+  "name": "meu-projeto-erc20",
+  "version": "1.0.0",
+  "description": "Projeto de ERC20 Token com Hardhat e Ganache",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ganache",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.6.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "ethers": "^5.0.0",
+    "hardhat": "^2.9.3",
+    "ganache": "^7.9.2"
+  }
+}
+
+

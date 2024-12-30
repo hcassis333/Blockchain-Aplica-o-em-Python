@@ -1,0 +1,93 @@
+
+### Comandos para Rodar e Testar a Aplicação Flask no Terminal ###
+
+1. **Iniciar o Servidor Flask**
+   Para iniciar o servidor localmente, use o comando:
+
+python3 app.py
+
+- O servidor estará disponível em: [http://127.0.0.1:5000](http://127.0.0.1:5000).
+- Use `CTRL+C` para parar o servidor.
+
+---
+
+2. **Corrigir Erro 404 para a Página Inicial (`/`)**
+Se você receber o erro `404` ao acessar `/`, adicione esta rota no arquivo `app.py`:
+```python
+@app.route('/')
+def index():
+    return "<h1>Bem-vindo à Blockchain Interface!</h1><p>Use as rotas da API para interagir com a blockchain.</p>"
+
+Reinicie o servidor após modificar o código:
+
+python3 app.py
+
+    Testar o Saldo de uma Carteira Use o comando curl para consultar o saldo de uma carteira:
+
+curl http://127.0.0.1:5000/api/balance/0x1234567890abcdef
+
+Resposta esperada:
+
+    {
+        "address": "0x1234567890abcdef",
+        "balance": 100
+    }
+
+    Criar uma Transação Para criar uma transação entre duas carteiras, use:
+
+curl -X POST http://127.0.0.1:5000/api/transaction \
+     -H "Content-Type: application/json" \
+     -d '{"sender": "0x1234567890abcdef", "recipient": "0xabcdef1234567890", "amount": 50}'
+
+Resposta esperada:
+
+    {
+        "message": "Transação criada com sucesso!"
+    }
+
+    Consultar a Blockchain Para visualizar o estado da blockchain e as transações pendentes:
+
+curl http://127.0.0.1:5000/api/chain
+
+Resposta esperada:
+
+    {
+        "chain": [],
+        "pending_transactions": [
+            {
+                "sender": "0x1234567890abcdef",
+                "recipient": "0xabcdef1234567890",
+                "amount": 50
+            }
+        ]
+    }
+
+    Adicionar um Ícone (Opcional) Se o navegador solicitar um ícone (favicon.ico), adicione esta rota no app.py:
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return app.send_static_file('favicon.ico')
+
+    Coloque o arquivo favicon.ico na pasta static/ ou no mesmo diretório do script app.py.
+
+    Outros Comandos Úteis
+        Verificar a Versão do Python:
+
+python3 --version
+
+Instalar o Flask:
+
+python3 -m pip install flask
+
+Instalar o pip (se necessário):
+
+        sudo apt install python3-pip
+
+Observações
+
+    Certifique-se de que o servidor está rodando antes de fazer requisições (python3 app.py).
+    Use CTRL+C para parar o servidor.
+    O comando curl permite testar as APIs diretamente pelo terminal. Alternativamente, você pode usar o Postman ou um navegador para interagir com as rotas da API.
+
+FIM
+
